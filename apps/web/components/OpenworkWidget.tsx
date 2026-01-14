@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { getOpenworkAPI } from '@/lib/openwork-api';
+import type { OpenworkWebAPI } from '@/lib/openwork-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import type { Task } from '@accomplish/shared';
+import type { Task, TaskUpdateEvent } from '@accomplish/shared';
 
 export interface OpenworkWidgetProps {
   /**
@@ -65,20 +66,42 @@ export function OpenworkWidget({
   const [prompt, setPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
-  const [api] = useState(() => getOpenworkAPI(apiBaseUrl));
+  const [api, setApi] = useState<OpenworkWebAPI | null>(null);
 
   useEffect(() => {
+    // Initialize API client only on the client side
+    setApi(getOpenworkAPI(apiBaseUrl));
+  }, [apiBaseUrl]);
+
+  useEffect(() => {
+    if (!api) return;
+    
     // Subscribe to task updates
-    const unsubscribe = api.onTaskUpdate((event) => {
+    const unsubscribe = api.onTaskUpdate((event: TaskUpdateEvent) => {
       if (currentTask && event.taskId === currentTask.id) {
-        // Update task state
+        // Update task state based on event type
         const updatedTask = { ...currentTask };
-        if (event.type === 'status') {
-          updatedTask.status = event.data.status;
-          if (event.data.status === 'completed' && onTaskComplete) {
+        
+        if (event.type === 'message' && event.message) {
+          updatedTask.messages = [...updatedTask.messages, event.message];
+        } else if (event.type === 'complete') {
+          updatedTask.status = 'completed';
+          if (event.result) {
+            updatedTask.result = event.result;
+          }
+          if (updatedTask.completedAt === undefined) {
+            updatedTask.completedAt = new Date().toISOString();
+          }
+          if (onTaskComplete) {
             onTaskComplete(updatedTask);
           }
+        } else if (event.type === 'error') {
+          updatedTask.status = 'failed';
+          if (event.result) {
+            updatedTask.result = event.result;
+          }
         }
+        
         setCurrentTask(updatedTask);
       }
     });
@@ -88,7 +111,7 @@ export function OpenworkWidget({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prompt.trim() || isLoading) return;
+    if (!prompt.trim() || isLoading || !api) return;
 
     setIsLoading(true);
     try {

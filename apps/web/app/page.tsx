@@ -1,3 +1,5 @@
+'use client';
+
 import { OpenworkWidget } from '@/components/OpenworkWidget';
 
 export default function HomePage() {

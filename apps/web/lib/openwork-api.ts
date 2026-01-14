@@ -19,7 +19,7 @@ import type {
 
 type EventCallback<T> = (data: T) => void;
 
-class OpenworkWebAPI {
+export class OpenworkWebAPI {
   private baseUrl: string;
   private ws: WebSocket | null = null;
   private eventListeners: Map<string, Set<EventCallback<any>>> = new Map();
