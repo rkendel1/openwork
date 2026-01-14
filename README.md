@@ -104,6 +104,8 @@
 
 ## How to use it
 
+### Desktop App
+
 > **Takes 2 minutes to set up.**
 
 | Step | Action | Details |
@@ -120,6 +122,32 @@
 [**Download for Mac (Apply Silicon)**](https://downloads.accomplish.ai/downloads/0.1.0/macos/Openwork-0.1.0-mac-arm64.dmg)
 
 </div>
+
+### Web Version
+
+You can also embed Openwork in your Next.js applications:
+
+```bash
+# In your Next.js project
+npm install @accomplish/web
+
+# Or use locally from the monorepo
+pnpm add @accomplish/web
+```
+
+```tsx
+import { OpenworkWidget } from '@accomplish/web';
+
+export default function MyPage() {
+  return (
+    <OpenworkWidget
+      onTaskStart={(task) => console.log('Task started:', task)}
+    />
+  );
+}
+```
+
+See the [Web App Documentation](apps/web/README.md) for detailed integration instructions.
 
 <br />
 
@@ -193,11 +221,14 @@ That's it.
 ```
 apps/
   desktop/        # Electron app (main + preload + renderer)
+  web/            # Next.js web app (embeddable in other apps)
 packages/
   shared/         # Shared TypeScript types
 ```
 
 The desktop app uses Electron with a React UI bundled via Vite. The main process spawns [OpenCode](https://github.com/sst/opencode) CLI using `node-pty` to execute tasks. API keys are stored securely in the OS keychain.
+
+The web app provides embeddable React components that can be integrated into any Next.js application. See [apps/web/README.md](apps/web/README.md) for web version documentation.
 
 See [CLAUDE.md](CLAUDE.md) for detailed architecture documentation.
 
